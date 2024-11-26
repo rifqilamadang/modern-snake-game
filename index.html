@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern Snake - Moh. Rifqi S. Lamadang</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script type="module" src="js/main.js" defer></script>
+</head>
+<body>
+    <!-- Portfolio Header -->
+    <header class="portfolio-header">
+        <div class="profile">
+            <h1>Moh. Rifqi S. Lamadang</h1>
+            <p class="title">Software Developer & Game Enthusiast</p>
+            <div class="social-links">
+                <a href="https://github.com/rifqilamadang" target="_blank"><i class="fab fa-github"></i></a>
+                <a href="https://linkedin.com/in/rifqilamadang" target="_blank"><i class="fab fa-linkedin"></i></a>
+                <a href="mailto:rifqilamadang@gmail.com"><i class="fas fa-envelope"></i></a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Game Container -->
+    <div class="game-wrapper">
+        <!-- Side Info -->
+        <div class="side-info">
+            <div class="score-info">
+                <div>Score: <span id="score">0</span></div>
+                <div>High Score: <span id="highScore">0</span></div>
+                <div>Level: <span id="level">1</span></div>
+            </div>
+            <div class="controls-info">
+                <h3>Controls</h3>
+                <p>↑ ↓ ← → : Move</p>
+                <p>P : Pause</p>
+                <p>Space : Boost Speed</p>
+                <div class="game-options">
+                    <label class="switch">
+                        <input type="checkbox" id="wallToggle">
+                        <span class="slider round"></span>
+                    </label>
+                    <span>No Walls Mode</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Game Area -->
+        <div class="game-area">
+            <canvas id="snakeCanvas"></canvas>
+            <div class="mobile-controls">
+                <button id="upBtn"><i class="fas fa-arrow-up"></i></button>
+                <div class="horizontal-controls">
+                    <button id="leftBtn"><i class="fas fa-arrow-left"></i></button>
+                    <button id="rightBtn"><i class="fas fa-arrow-right"></i></button>
+                </div>
+                <button id="downBtn"><i class="fas fa-arrow-down"></i></button>
+                <button id="boostBtn"><i class="fas fa-bolt"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Modal -->
+    <div class="modal" id="startModal">
+        <div class="modal-content">
+            <h2>Modern Snake</h2>
+            <p class="author">by Moh. Rifqi S. Lamadang</p>
+            
+            <div class="options">
+                <div class="game-modes">
+                    <h3>Game Mode</h3>
+                    <div class="button-group">
+                        <button class="mode-btn" data-mode="classic">Classic Mode</button>
+                        <button class="mode-btn" data-mode="portal">Portal Mode</button>
+                    </div>
+                </div>
+                
+                <div class="difficulty">
+                    <h3>Select Difficulty</h3>
+                    <div class="button-group">
+                        <button class="difficulty-btn" data-speed="150">Easy</button>
+                        <button class="difficulty-btn" data-speed="100">Medium</button>
+                        <button class="difficulty-btn" data-speed="70">Hard</button>
+                    </div>
+                </div>
+
+                <div class="walls-mode">
+                    <h3>Wall Mode</h3>
+                    <div class="toggle-container">
+                        <label class="switch">
+                            <input type="checkbox" id="noWallsToggle">
+                            <span class="slider round"></span>
+                        </label>
+                        <span>No Walls Mode</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="start-btn" id="startGameBtn" disabled>Start Game</button>
+        </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div class="modal" id="gameOverModal" style="display: none;">
+        <div class="modal-content">
+            <h2>Game Over!</h2>
+            <div class="score-summary">
+                Score: <span class="highlight" id="finalScore">0</span><br>
+                Level: <span class="highlight" id="finalLevel">1</span>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn" id="playAgainBtn">Play Again</button>
+                <button class="modal-btn secondary" id="mainMenuBtn">Main Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Portfolio Footer -->
+    <footer class="portfolio-footer">
+        <p>A modern take on the classic Snake game with particle effects and smooth animations</p>
+        <div class="tech-stack">
+            <span>HTML5</span>
+            <span>CSS3</span>
+            <span>JavaScript</span>
+            <span>Canvas API</span>
+        </div>
+        <p class="copyright"> 2024 Moh. Rifqi S. Lamadang. All rights reserved.</p>
+    </footer>
+</body>
+</html>
