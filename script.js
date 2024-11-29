@@ -96,7 +96,12 @@ function initGame() {
     
     // Set up the canvas size
     resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('resize', () => {
+        clearTimeout(window.resizeTimeout);
+        window.resizeTimeout = setTimeout(() => {
+            resizeCanvas();
+        }, 250); // Debounce resize events
+    });
     
     // Set up event listeners
     setupEventListeners();
@@ -216,6 +221,11 @@ function handleKeyPress(event) {
         event.preventDefault();
     }
 
+    // Don't handle keys if game is over or paused
+    if (isGameOver || isPaused) {
+        return;
+    }
+
     if (event.key === 'p' || event.key === 'P') {
         togglePause();
         return;
@@ -228,16 +238,16 @@ function handleKeyPress(event) {
 
     switch (event.key) {
         case 'ArrowUp':
-            changeDirection('up');
+            if (direction !== 'down') changeDirection('up');
             break;
         case 'ArrowDown':
-            changeDirection('down');
+            if (direction !== 'up') changeDirection('down');
             break;
         case 'ArrowLeft':
-            changeDirection('left');
+            if (direction !== 'right') changeDirection('left');
             break;
         case 'ArrowRight':
-            changeDirection('right');
+            if (direction !== 'left') changeDirection('right');
             break;
     }
 }
@@ -257,12 +267,25 @@ function changeDirection(newDirection) {
 
 function createFood() {
     let newFood;
+    let attempts = 0;
+    const maxAttempts = GRID_SIZE * GRID_SIZE;
+    
     do {
         newFood = {
             x: Math.floor(Math.random() * GRID_SIZE),
             y: Math.floor(Math.random() * GRID_SIZE)
         };
-    } while (snake.some(segment => segment.x === newFood.x && segment.y === newFood.y));
+        attempts++;
+        
+        // If we can't find a valid position after many attempts, reset the game
+        if (attempts > maxAttempts) {
+            gameOver();
+            return;
+        }
+    } while (
+        snake.some(segment => segment.x === newFood.x && segment.y === newFood.y) ||
+        walls.some(wall => wall.x === newFood.x && wall.y === newFood.y)
+    );
 
     food = newFood;
     createFoodParticles();
@@ -277,6 +300,8 @@ function createFoodParticles() {
 }
 
 function moveSnake() {
+    if (isGameOver || isPaused) return;
+    
     direction = nextDirection;
     const head = { ...snake[0] };
 
@@ -314,9 +339,10 @@ function moveSnake() {
         createFood();
         updateScore();
         
-        // Level up every 100 points
+        // Level up every 100 points with speed limit
         if (score % 100 === 0) {
             level++;
+            // Ensure speed doesn't go below minimum of 50ms
             selectedSpeed = Math.max(50, INITIAL_SPEED - (level - 1) * 10);
             updateScore();
         }
@@ -329,6 +355,11 @@ function checkCollision() {
     const head = snake[0];
     
     // Check wall collision
+    if (head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE) {
+        return true;
+    }
+    
+    // Check wall obstacles collision
     for (const wall of walls) {
         if (head.x === wall.x && head.y === wall.y) {
             return true;
@@ -447,18 +478,39 @@ function gameOver() {
     
     // Update high score
     if (score > highScore) {
+        const oldHighScore = highScore;
         highScore = score;
         localStorage.setItem('snakeHighScore', highScore);
+        
+        // Animate high score change
+        let current = oldHighScore;
+        const increment = Math.ceil((highScore - oldHighScore) / 20);
+        const animateScore = () => {
+            current = Math.min(current + increment, highScore);
+            if (highScoreElement) highScoreElement.textContent = current;
+            if (current < highScore) {
+                requestAnimationFrame(animateScore);
+            }
+        };
+        animateScore();
     }
     
     updateScore();
     
-    // Show game over modal
-    document.getElementById('gameOverModal').style.display = 'flex';
-
     // Create explosion effect
     const head = snake[0];
     createExplosionParticles(head.x + CELL_SIZE / 2, head.y + CELL_SIZE / 2);
+    
+    // Show game over modal with fade-in animation
+    const modal = document.getElementById('gameOverModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        modal.style.opacity = '0';
+        setTimeout(() => {
+            modal.style.opacity = '1';
+            modal.style.transition = 'opacity 0.5s';
+        }, 0);
+    }
 }
 
 function createExplosionParticles(x, y) {
@@ -485,7 +537,59 @@ function startGame() {
 }
 
 function togglePause() {
+    if (isGameOver) return;
+    
     isPaused = !isPaused;
+    
+    if (isPaused) {
+        // Stop game interval
+        if (gameInterval) {
+            clearInterval(gameInterval);
+            gameInterval = null;
+        }
+        
+        // Show pause overlay with animation
+        const overlay = document.createElement('div');
+        overlay.id = 'pauseOverlay';
+        overlay.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+        `;
+        
+        const pauseText = document.createElement('div');
+        pauseText.textContent = 'PAUSED';
+        pauseText.style.cssText = `
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            text-shadow: 0 0 10px #00ff87;
+        `;
+        
+        overlay.appendChild(pauseText);
+        canvas.parentElement.appendChild(overlay);
+        
+        // Trigger animation
+        setTimeout(() => overlay.style.opacity = '1', 0);
+    } else {
+        // Remove pause overlay
+        const overlay = document.getElementById('pauseOverlay');
+        if (overlay) {
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.remove(), 300);
+        }
+        
+        // Restart game interval
+        startGame();
+    }
 }
 
 function setGameSpeed(speed) {
@@ -502,22 +606,26 @@ function setGameSpeed(speed) {
 
 function resizeCanvas() {
     const gameArea = document.querySelector('.game-area');
-    const wrapper = document.querySelector('.game-wrapper');
-    const headerHeight = document.querySelector('.portfolio-header').offsetHeight;
-    const footerHeight = document.querySelector('.portfolio-footer').offsetHeight;
+    if (!gameArea) return;
+
+    // Get the game area dimensions
+    const gameAreaRect = gameArea.getBoundingClientRect();
     
-    // Calculate available height
-    const availableHeight = window.innerHeight - headerHeight - footerHeight - 40; // 40px for padding
-    
-    // Calculate the ideal size based on available space
-    const maxWidth = wrapper.clientWidth - 40; // 40px for padding
-    const size = Math.min(maxWidth, availableHeight);
+    // Calculate the maximum size that maintains the aspect ratio
+    const size = Math.min(
+        gameAreaRect.width,
+        gameAreaRect.height,
+        Math.min(window.innerWidth, window.innerHeight) * 0.8
+    );
     
     // Set canvas size
     canvas.width = size;
     canvas.height = size;
     
-    // Force redraw
+    // Adjust cell size based on new canvas size
+    CELL_SIZE = size / GRID_SIZE;
+    
+    // Redraw immediately to prevent flicker
     draw();
 }
 
